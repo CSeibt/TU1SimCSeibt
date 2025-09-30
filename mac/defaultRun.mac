@@ -1,0 +1,27 @@
+
+# ------------
+/generator/volumeOffset 0 mm #Summe aus "sampleOffset", "sampleDistance" + Dicke Plastikbehälter + evtl. Foliendicke
+ /generator/volumeHeight 1. mm  # Use sane value as extendedSampleFilling
+ /generator/volumeDiameter 25. mm   # Use same value as plasticInnerDiameter
+ 
+/generator/posMode point
+#/generator/posMode inRock
+#/generator/posMode inSphere
+#/generator/posMode inCylinder
+
+# ------------
+/generator/directionMode isotropic
+#/generator/setCustomDirection 0 0 -1
+# -----------
+#/generator/setDecay0File ../decay0/genCo60.txt
+/gun/position 6.6 12.3 0.317 mm
+
+/gun/particle gamma
+/gun/energy 50 keV
+#/run/beamOn 1
+#/run/beamOn 10
+
+#/gun/ion 55 137 #137Cs
+#/gun/ion 27 60 #60Co
+#/gun/ion 39 88 #88Y 
+/run/beamOn 50

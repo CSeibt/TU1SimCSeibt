@@ -1,0 +1,11 @@
+cd DeadLayerInside
+
+. SimAll.sh
+
+cd ../DeadLayerBack
+
+. SimAll.sh
+
+cd ..
+
+touch Done-Inside-Back

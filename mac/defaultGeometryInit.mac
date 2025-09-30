@@ -1,0 +1,97 @@
+# Macro file for the initialization in interactive session
+
+# Aktiviere TU1Detector und setze seine Längen
+/geometry/TU1Detector/enable True
+/geometry/TU1Detector/setLength/deadLayerFront  0.0 mm
+/geometry/TU1Detector/setLength/deadLayerOutside  1. mm
+/geometry/TU1Detector/setLength/deadLayerInside  0.2 mm
+/geometry/TU1Detector/setLength/deadLayerBack  0.2 mm
+
+/geometry/TU1Detector/setLength/distanceFromCap 7.73 mm
+/geometry/TU1Detector/setLength/boreHoleDiameter 14 mm
+/geometry/TU1Detector/setLength/boreHoleLength 65 mm
+/geometry/TU1Detector/setLength/crystalLength 91.2 mm
+/geometry/TU1Detector/setLength/crystalDiameter 91.2 mm
+/geometry/TU1Detector/setLength/capThickness 1.6 mm
+/geometry/TU1Detector/setLength/capThicknessside 2.5 mm
+
+# Shielding Settings + further Settings
+/geometry/Shielding/enable True
+/geometry/Shielding/setBool/simulateLid False
+/geometry/Shielding/setBool/lidOn False
+/geometry/Shielding/setLength/detectorLoc 10 cm
+/geometry/TU1Detector/setBool/innerCopperRing True
+/geometry/TU1Detector/setBool/innerCopperDisk True
+/geometry/TU1Detector/setBool/innerCopperDiskbottom True
+/geometry/TU1Detector/setBool/crystalHolderOn True
+
+# Cooling Finger Settings
+/geometry/TU1Detector/setBool/coolingFingerOn True
+/geometry/Shielding/setBool/coolingFingerOn True
+
+  	#Sample Holder Settings
+  /geometry/TU1Detector/setBool/sampleHolderOn False
+  /geometry/TU1Detector/setBool/holderRoundedCorners True
+  /geometry/TU1Detector/setLength/sampleDistance 0.25 cm #0.25 cm 14.5
+ #/geometry/TU1Detector/setLength/holderHoleOuterDiameter 30.0 mm
+ #/geometry/TU1Detector/setLength/holderHoleInnerDiameter 20.2 mm
+ #/geometry/TU1Detector/setLength/holderHoleOuterDiameter 45.2 mm
+ #/geometry/TU1Detector/setLength/holderHoleInnerDiameter 40.2 mm
+  /geometry/TU1Detector/setLength/holderHoleOuterDiameter 75.2 mm
+  /geometry/TU1Detector/setLength/holderHoleInnerDiameter 70.2 mm
+  /geometry/TU1Detector/setLength/bottomThicknessSampleHolder 2.5 mm
+  /geometry/TU1Detector/setBool/plasticCasingOn False
+ #/geometry/TU1Detector/setBool/plasticFoilOn False
+
+# Extended Source Sphere
+#/geometry/TU1Detector/setBool/extendedSampleOn True
+#/geometry/TU1Detector/setString/extendedSampleShape sphere
+#/geometry/TU1Detector/setLength/sphereDiameter 0.1 mm
+#/geometry/TU1Detector/setLength/sphereOffset 14.6 cm
+#/geometry/TU1Detector/setString/sampleMaterialName meteorit2_comp
+
+# Extended Source cylinder 
+#/geometry/TU1Detector/setBool/extendedSampleOn true
+#/geometry/TU1Detector/setString/extendedSampleShape cylinder
+#/geometry/TU1Detector/setLength/cylinderDiameter 25. mm #2.7 cm
+#/geometry/TU1Detector/setLength/cylinderLength 1. mm #7.3 cm
+#/geometry/TU1Detector/setLength/cylinderOffset 0 mm #-2. cm
+#/geometry/TU1Detector/setString/sampleMaterialName cerium_5
+
+# Extended Source cylinder in source container
+ # /geometry/TU1Detector/setBool/extendedSampleOn True
+ # /geometry/TU1Detector/setString/extendedSampleShape samplecontainer
+ # /geometry/TU1Detector/setLength/plasticInnerDiameter 69.81 mm
+ # /geometry/TU1Detector/setLength/plasticOuterDiameter 71.81 mm
+ # /geometry/TU1Detector/setLength/plasticInnerHeight 21.17 mm
+ # /geometry/TU1Detector/setLength/plasticOuterHeight 23.17 mm
+ # /geometry/TU1Detector/setLength/extendedSampleFilling 21.17 mm
+ # /geometry/TU1Detector/setLength/sampleOffset 2.5 mm 		# Determines shift of the plastic casing along z axis
+ # /geometry/TU1Detector/setString/sampleMaterialName USi 	#"lorandit", "K2SO4" and "enstatit" implemented
+ # /geometry/TU1Detector/setDensity/sampleMaterialDensity 1.242 g/cm3
+
+#PEN Sample
+/geometry/PENSample/enable True
+
+# RockSample 
+#/geometry/RockSample/enable True
+#/geometry/RockSample/setString/STLfileName /SHARE/raw/users/pichotta/TU1/Simulation/STL/Meteorit2_ascii.stl	#Meteorit2_ascii.stl #solid.stl #Drelow_ascii.stl
+  
+# Aubrit
+# /geometry/RockSample/setLength/distanceFromCapRock -0.01 cm
+# /geometry/RockSample/setDouble/Rotx 7 degree
+# /geometry/RockSample/setDouble/Roty  90. degree
+# /geometry/RockSample/setDouble/Rotz 90. degree
+
+# Meteorit2
+ #/geometry/RockSample/setLength/distanceFromCapRock 0.527 cm
+ #/geometry/RockSample/setDouble/Rotx 1.2 degree # dreht bei der draufsicht
+ #/geometry/RockSample/setDouble/Roty  -3 degree #dreht von der Seiten ansicht
+ #/geometry/RockSample/setDouble/Rotz 0. degree # dreht nur auf Endkappe im kreis
+
+# Drelow
+#/geometry/RockSample/setLength/distanceFromCapRock 0.797 cm
+#/geometry/RockSample/setDouble/Rotx -24.9 degree # dreht bei der draufsicht
+#/geometry/RockSample/setDouble/Roty  100.9 degree #dreht von der Seiten ansicht
+#/geometry/RockSample/setDouble/Rotz 0 degree # dreht nur auf Endkappe im kreis
+

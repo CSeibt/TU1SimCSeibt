@@ -1,0 +1,89 @@
+# Example macro file for TU1 simulation
+# 
+# Change the default number of workers (in multi-threading mode) 
+#/run/numberOfThreads 4
+
+# Geometry Options
+# ----------------
+# Here we simulate the detector, shielding and sample holder with rounded corners and cooling finger
+
+  	#Shielding Geometry Settings
+  /geometry/Shielding/enable True
+  /geometry/Shielding/setLength/detectorLoc 5 cm
+
+  	#Detector Geometry Settings
+  /geometry/TU1Detector/enable True
+
+  /geometry/TU1Detector/setLength/deadLayerFront  0.2 mm
+  /geometry/TU1Detector/setLength/deadLayerOutside  0.2 mm
+  /geometry/TU1Detector/setLength/deadLayerInside  0.2 mm
+  /geometry/TU1Detector/setLength/deadLayerBack  0.2 mm
+
+  /geometry/TU1Detector/setLength/distanceFromCap 7.5 mm
+  /geometry/TU1Detector/setLength/boreHoleDiameter 15 mm
+  /geometry/TU1Detector/setLength/crystalLength 90 mm
+  /geometry/TU1Detector/setLength/crystalDiameter 90 mm
+  /geometry/TU1Detector/setLength/capThickness 1.5 mm
+  /geometry/TU1Detector/setLength/boreHoleLength 60 mm
+
+  	#Sample Holder Settings
+  /geometry/TU1Detector/setBool/sampleHolderOn True
+  /geometry/TU1Detector/setBool/holderRoundedCorners True
+  /geometry/TU1Detector/setLength/sampleDistance 3 cm
+  /geometry/TU1Detector/setLength/holderHoleOuterDiameter 75.2 mm
+  /geometry/TU1Detector/setLength/holderHoleInnerDiameter 70.2 mm
+
+  	#Cooling Finger Settings
+  /geometry/TU1Detector/setBool/coolingFingerOn True
+  /geometry/TU1Detector/setLength/coolingFingerLength 14.75 cm
+  /geometry/Shielding/setBool/coolingFingerOn True
+
+  	#Further Settings
+  /geometry/TU1Detector/setBool/innerCopperRing True
+  /geometry/TU1Detector/setBool/crystalHolderOn True
+
+  	#Extended Source Settings
+  /geometry/TU1Detector/setBool/extendedSampleOn False
+#
+
+# Initialize kernel
+# -----------------
+  /run/initialize
+#
+
+# Detector Response Parameters
+# ----------------------------
+# Energy resolution:
+#   sigma/MeV = (A0 + A1*(E/MeV) + A2*(E/MeV)^2)^0.5
+  /detectorResponse/setA0 25.00e-8
+  /detectorResponse/setA1  1.07e-6
+  /detectorResponse/setA2  0.00
+#
+# Trigger threshold:
+# probability to trigger = 1.0 / (1 + exp((Evis-m_trigThreshold) / (m_trigWidth))),
+# with Evis = Edep after energy deposition
+  /detectorResponse/setTriggerThreshold 20 keV
+  /detectorResponse/setTriggerWidth 5 keV
+#
+
+
+# Primary Generator Parameters
+# ----------------------------
+  /generator/mode point-isotropic
+# Or a radioactive ion (at rest), to observe its decay
+  /gun/particle gamma
+  /gun/position 0 0 3 cm
+  
+  
+# Start the Runs
+# --------------
+  /run/printProgress 10000
+
+  /run/fileName run_898keV.root
+  /gun/energy 898.042 keV
+  /run/beamOn 10000000
+
+  /run/fileName run_1836keV.root
+  /gun/energy 1836.063 keV
+  /run/beamOn 10000000
+

@@ -1,0 +1,13 @@
+# --- PREINIT configuration ---
+/run/numberOfThreads 1
+# Default-Verbose
+/control/verbose 0
+/run/verbose 0
+/control/saveHistory
+
+# Activate Auger Effect, Particle Induced X-Ray Emission (PIXE) 
+# and deexcitation processes and fluorescence
+/process/em/deexcitation World true true true
+/process/em/fluo true
+/process/em/auger true
+/process/em/pixe true

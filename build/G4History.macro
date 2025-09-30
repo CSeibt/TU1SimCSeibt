@@ -1,0 +1,48 @@
+/process/em/deexcitation World true true true
+/run/physicsModified
+/process/em/fluo true
+/run/physicsModified
+/process/em/auger true
+/run/physicsModified
+/process/em/pixe true
+/run/physicsModified
+/control/execute ../projects/PENGranulate2509/runIsotopes-Volume40K.mac
+/geometry/TU1Detector/enable True
+/geometry/TU1Detector/enable True
+/geometry/TU1Detector/setLength/deadLayerFront 0.0 mm
+/geometry/TU1Detector/setLength/deadLayerOutside 1. mm
+/geometry/TU1Detector/setLength/deadLayerInside 0.2 mm
+/geometry/TU1Detector/setLength/deadLayerBack 0.2 mm
+/geometry/TU1Detector/setLength/distanceFromCap 7.78 mm
+/geometry/TU1Detector/setLength/boreHoleDiameter 14 mm
+/geometry/TU1Detector/setLength/boreHoleLength 65 mm
+/geometry/TU1Detector/setLength/crystalLength 91.2 mm
+/geometry/TU1Detector/setLength/crystalDiameter 91.2 mm
+/geometry/TU1Detector/setLength/capThickness 1.6 mm
+/geometry/TU1Detector/setLength/capThicknessside 2.5 mm
+/geometry/Shielding/enable True
+/geometry/Shielding/setBool/simulateLid False
+/geometry/Shielding/setBool/lidOn False
+/geometry/Shielding/setLength/detectorLoc 10 cm
+/geometry/TU1Detector/setBool/innerCopperRing True
+/geometry/TU1Detector/setBool/innerCopperDisk True
+/geometry/TU1Detector/setBool/innerCopperDiskbottom True
+/geometry/TU1Detector/setBool/crystalHolderOn True
+/geometry/TU1Detector/setBool/coolingFingerOn True
+/geometry/Shielding/setBool/coolingFingerOn True
+/geometry/PENSample/enable True
+/process/had/deex/correlatedGamma true
+/run/initialize
+/detectorResponse/setA0 25.00e-8
+/detectorResponse/setA1 1.07e-6
+/detectorResponse/setA2 0.00
+/detectorResponse/setTriggerThreshold 20 keV
+/detectorResponse/setTriggerWidth 5 keV
+/generator/directionMode isotropic
+/generator/posMode inLogicalVolume
+/generator/setLogicalVolumeName PENSample
+/run/printProgress 10000
+/gun/particle ion
+/gun/ion 19 40
+/run/fileName /SHARE/groups/np/Geant4/TU1CSeibt250924/Simulation/projects/PENGranulate2509/run40K.root
+/run/beamOn 10000000
