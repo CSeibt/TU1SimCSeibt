@@ -84,8 +84,6 @@ int main(int argc, char** argv)
     // NOTE: Seed is set in RunAction.cc and based on linux <random>
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
 
-    G4RootAnalysisManager::Instance();
-
     // Use G4SteppingVerboseWithUnits
     if (verboseBestUnits)
     {

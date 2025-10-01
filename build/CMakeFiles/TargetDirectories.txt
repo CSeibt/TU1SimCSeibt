@@ -1,3 +1,0 @@
-/SHARE/groups/np/Geant4/TU1CSeibt250924/Simulation/build/CMakeFiles/TU1.dir
-/SHARE/groups/np/Geant4/TU1CSeibt250924/Simulation/build/CMakeFiles/edit_cache.dir
-/SHARE/groups/np/Geant4/TU1CSeibt250924/Simulation/build/CMakeFiles/rebuild_cache.dir

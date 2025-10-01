@@ -26,62 +26,61 @@ RunAction::RunAction(bool isMaster) : G4UserRunAction(), fIsMaster(isMaster)
 
     // Merge ntuples (= in case of multithreading, merge to single output file)
     analysisManager->SetNtupleMerging(true);
-    analysisManager->SetNtupleRowWise(true);  // Enable row-wise ntuple merging
-
-    // Creating histograms 
-    analysisManager->CreateH1("Egamma", "Egamma Events", 200000, 0, 20);
-
-    // one histogram storing all energy depositions (including zero)
-    analysisManager->CreateH1("EdepAll", "Edep All Events", 200000, 0, 20);
-
-    // one histogram storing only "visible" events with non-zero energy deposition
-    analysisManager->CreateH1("Edep", "Edep Events", 200000, 0, 20);
-
-    // one histogram storing only "visible" events with non-zero visible energy deposition
-    analysisManager->CreateH1("Evis", "Evis Events", 200000, 0, 20);
-        // Creating ntuple
-
-    // Ntuple 0: Ions (PrimaryGeneratorAction)
-    analysisManager->CreateNtuple("ions", "Primary ions");
-    analysisManager->CreateNtupleDColumn("posX");
-    analysisManager->CreateNtupleDColumn("posY");
-    analysisManager->CreateNtupleDColumn("posZ");
-    analysisManager->FinishNtuple();
-
-    // Ntuple 1: Gammas (TrackingAction)
-    analysisManager->CreateNtuple("gammas", "Decay gammas");
-    analysisManager->CreateNtupleDColumn("Egamma");
-    analysisManager->CreateNtupleDColumn("GammaDirX");
-    analysisManager->CreateNtupleDColumn("GammaDirY");
-    analysisManager->CreateNtupleDColumn("GammaDirZ");
-    analysisManager->CreateNtupleDColumn("posX");
-    analysisManager->CreateNtupleDColumn("posY");
-    analysisManager->CreateNtupleDColumn("posZ");
-    analysisManager->FinishNtuple();
-
-    // Ntuple 2: Gammas (EventAction)
-    analysisManager->CreateNtuple("Detector", "Detector events");
-    analysisManager->CreateNtupleDColumn("Edep");
-    analysisManager->CreateNtupleDColumn("Evis");
-    analysisManager->FinishNtuple();
-
-    // Ntuple 3: Gammas (EventAction)
-    analysisManager->CreateNtuple("angle", "angle  events");
-    analysisManager->CreateNtupleDColumn("angle");
-    analysisManager->FinishNtuple();
-
-    // Ntuple 4: Gammas (TrackingAction)
-    analysisManager->CreateNtuple("decay0", "Decay0 gammas");
-    analysisManager->CreateNtupleDColumn("Egamma");
-    analysisManager->CreateNtupleDColumn("GammaDirX");
-    analysisManager->CreateNtupleDColumn("GammaDirY");
-    analysisManager->CreateNtupleDColumn("GammaDirZ");
-    analysisManager->CreateNtupleDColumn("posX");
-    analysisManager->CreateNtupleDColumn("posY");
-    analysisManager->CreateNtupleDColumn("posZ");
-    analysisManager->FinishNtuple();
     
+    // Creating histograms 
+        analysisManager->CreateH1("Egamma", "Egamma Events", 200000, 0, 20);
 
+        // one histogram storing all energy depositions (including zero)
+        analysisManager->CreateH1("EdepAll", "Edep All Events", 200000, 0, 20);
+
+        // one histogram storing only "visible" events with non-zero energy deposition
+        analysisManager->CreateH1("Edep", "Edep Events", 200000, 0, 20);
+
+        // one histogram storing only "visible" events with non-zero visible energy deposition
+        analysisManager->CreateH1("Evis", "Evis Events", 200000, 0, 20);
+            // Creating ntuple
+
+        // Ntuple 0: Ions (PrimaryGeneratorAction)
+        analysisManager->CreateNtuple("ions", "Primary ions");
+        analysisManager->CreateNtupleDColumn("posX");
+        analysisManager->CreateNtupleDColumn("posY");
+        analysisManager->CreateNtupleDColumn("posZ");
+        analysisManager->FinishNtuple();
+
+        // Ntuple 1: Gammas (TrackingAction)
+        analysisManager->CreateNtuple("gammas", "Decay gammas");
+        analysisManager->CreateNtupleDColumn("Egamma");
+        analysisManager->CreateNtupleDColumn("GammaDirX");
+        analysisManager->CreateNtupleDColumn("GammaDirY");
+        analysisManager->CreateNtupleDColumn("GammaDirZ");
+        analysisManager->CreateNtupleDColumn("posX");
+        analysisManager->CreateNtupleDColumn("posY");
+        analysisManager->CreateNtupleDColumn("posZ");
+        analysisManager->FinishNtuple();
+
+        // Ntuple 2: Gammas (EventAction)
+        analysisManager->CreateNtuple("Detector", "Detector events");
+        analysisManager->CreateNtupleDColumn("Edep");
+        analysisManager->CreateNtupleDColumn("Evis");
+        analysisManager->FinishNtuple();
+
+        // Ntuple 3: Gammas (EventAction)
+        analysisManager->CreateNtuple("angle", "angle  events");
+        analysisManager->CreateNtupleDColumn("angle");
+        analysisManager->FinishNtuple();
+
+        // Ntuple 4: Gammas (TrackingAction)
+        analysisManager->CreateNtuple("decay0", "Decay0 gammas");
+        analysisManager->CreateNtupleDColumn("Egamma");
+        analysisManager->CreateNtupleDColumn("GammaDirX");
+        analysisManager->CreateNtupleDColumn("GammaDirY");
+        analysisManager->CreateNtupleDColumn("GammaDirZ");
+        analysisManager->CreateNtupleDColumn("posX");
+        analysisManager->CreateNtupleDColumn("posY");
+        analysisManager->CreateNtupleDColumn("posZ");
+        analysisManager->FinishNtuple();
+        
+    
 }
 
 void RunAction::BeginOfRunAction(const G4Run* /*run*/)
