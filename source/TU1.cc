@@ -5,6 +5,8 @@
 #include "ActionInitialization.hh"
 
 #include "G4RunManagerFactory.hh"
+#include "G4RunManager.hh"
+#include "G4MTRunManager.hh"
 #include "G4SteppingVerbose.hh"
 #include "G4UIcommand.hh"
 #include "G4UImanager.hh"
@@ -15,6 +17,7 @@
 #include "G4DecayPhysics.hh"
 #include "G4IonPhysics.hh"
 #include "G4EmStandardPhysics.hh"
+#include "G4RootAnalysisManager.hh"
 
 
 namespace
@@ -81,6 +84,8 @@ int main(int argc, char** argv)
     // NOTE: Seed is set in RunAction.cc and based on linux <random>
     G4Random::setTheEngine(new CLHEP::RanecuEngine);
 
+    G4RootAnalysisManager::Instance();
+
     // Use G4SteppingVerboseWithUnits
     if (verboseBestUnits)
     {
@@ -95,7 +100,9 @@ int main(int argc, char** argv)
 #ifdef G4MULTITHREADED
     if (nThreads > 0)
     {
+        G4cout << "===== Multi-threaded mode with " << nThreads << " threads =====" << G4endl;
         runManager->SetNumberOfThreads(nThreads);
+        G4cout << " " << G4endl;
     }
 #endif
 
@@ -128,8 +135,6 @@ int main(int argc, char** argv)
 
     // Initialize visualization
     auto visManager = new G4VisExecutive;
-    // G4VisExecutive can take a verbosity argument - see /vis/verbose guidance.
-    // G4VisManager* visManager = new G4VisExecutive("Quiet");
     visManager->Initialize();
 
     // Get the pointer to the User Interface manager

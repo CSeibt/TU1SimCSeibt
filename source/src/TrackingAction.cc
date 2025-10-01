@@ -14,9 +14,9 @@
 #include <cmath>
 
 // Vectors to safe the directions of 2 gammas
-static thread_local std::map<G4int, G4ThreeVector> gamma1Directions;
-static thread_local std::map<G4int, G4ThreeVector> gamma2Directions;
-static thread_local std::map<G4int, G4int> gamma1PrimaryID;
+static thread_local std::map<G4int, G4ThreeVector> gamma1DirectionsTrack;
+static thread_local std::map<G4int, G4ThreeVector> gamma2DirectionsTrack;
+static thread_local std::map<G4int, G4int> gamma1PrimaryIDTrack;
 
 double roundToStep(double val, double step = 1e-6) {
 	return std::round(val / step) * step;
@@ -56,27 +56,29 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 
 			// rounded because for point sources in 0 0 z position slightly negative values close to zero are not shown in position histograms
 			analysisManager->FillH1(0, energy / CLHEP::MeV); // all energy depositions
-			analysisManager->FillNtupleDColumn(1, 0, energy);
-			analysisManager->FillNtupleDColumn(1, 1, direction.x());
-			analysisManager->FillNtupleDColumn(1, 2, direction.y());
-			analysisManager->FillNtupleDColumn(1, 3, direction.z());
-			analysisManager->FillNtupleDColumn(1, 4, position.x());
-			analysisManager->FillNtupleDColumn(1, 5, position.y());
-			analysisManager->FillNtupleDColumn(1, 6, position.z());
-			//G4cout << "position.x() " << roundToStep(position.x()) << G4endl;
-			//G4cout << "position.y() " << roundToStep(position.y()) << G4endl;
-			//G4cout << "position.z() " << roundToStep(position.z()) << G4endl;
-			//G4cout << "track ID gamma " << track->GetTrackID() << G4endl;
-			analysisManager->AddNtupleRow(1);
+			if (analysisManager->GetNofNtuples() > 1 && analysisManager->GetNtupleActivation(1)) {
+                analysisManager->FillNtupleDColumn(1, 0, energy);
+                analysisManager->FillNtupleDColumn(1, 1, direction.x());
+                analysisManager->FillNtupleDColumn(1, 2, direction.y());
+                analysisManager->FillNtupleDColumn(1, 3, direction.z());
+                analysisManager->FillNtupleDColumn(1, 4, position.x());
+                analysisManager->FillNtupleDColumn(1, 5, position.y());
+                analysisManager->FillNtupleDColumn(1, 6, position.z());
+                //G4cout << "position.x() " << roundToStep(position.x()) << G4endl;
+                //G4cout << "position.y() " << roundToStep(position.y()) << G4endl;
+                //G4cout << "position.z() " << roundToStep(position.z()) << G4endl;
+                //G4cout << "track ID gamma " << track->GetTrackID() << G4endl;
+                analysisManager->AddNtupleRow(1);
+            }
 
 			//in case of 2 gammas from one decay, the angle between gammas is calculated and printed
 			if(false)
 			{
 				// Nur speichern, wenn Slot noch frei
-				if (parentID == 2 & gamma1Directions.find(eventID) == gamma1Directions.end())
+				if (parentID == 2 & gamma1DirectionsTrack.find(eventID) == gamma1DirectionsTrack.end())
 				{
-					gamma1Directions[eventID] = direction;
-					gamma1PrimaryID[eventID] = parentID;
+					gamma1DirectionsTrack[eventID] = direction;
+					gamma1PrimaryIDTrack[eventID] = parentID;
 					//G4cout << "hello " << G4endl;
 					//G4cout << "eventID 1 " << eventID << G4endl;
 					//G4cout << "parentID 1 " << parentID << G4endl;
@@ -84,11 +86,11 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 					//G4cout << "_______________________ " << G4endl;
 					//G4cout << "gamma energy 1 " << track->GetKineticEnergy() << G4endl;
 				}
-				else if (track->GetKineticEnergy()>1331 * CLHEP::keV & gamma2Directions.find(eventID) == gamma2Directions.end())
+				else if (track->GetKineticEnergy()>1331 * CLHEP::keV & gamma2DirectionsTrack.find(eventID) == gamma2DirectionsTrack.end())
 				{
 				
 					// Vergleich der Prim�rteilchen-IDs
-					//if (parentID == gamma1PrimaryID[eventID])
+					//if (parentID == gamma1PrimaryIDTrack[eventID])
 					{
 						
 						//G4cout << "eventID 2 " << eventID << G4endl;
@@ -96,11 +98,11 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 						//G4cout << "trackid 2 " << track->GetTrackID() << G4endl;
 					//	G4cout << "gamma energy 2 " << track->GetKineticEnergy() << G4endl;
 
-						gamma2Directions[eventID] = direction;
+						gamma2DirectionsTrack[eventID] = direction;
 
-						const G4ThreeVector& dir1 = gamma1Directions[eventID];
-						const G4ThreeVector& dir2 = gamma2Directions[eventID];
-						
+						const G4ThreeVector& dir1 = gamma1DirectionsTrack[eventID];
+						const G4ThreeVector& dir2 = gamma2DirectionsTrack[eventID];
+
 						 // Normiere zur Sicherheit (falls nicht schon normiert)
                         G4ThreeVector v1 = dir1.unit();
                         G4ThreeVector v2 = dir2.unit();

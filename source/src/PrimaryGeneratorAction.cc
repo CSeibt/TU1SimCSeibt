@@ -28,6 +28,8 @@
 #include "G4ThreeVector.hh"
 #include "G4AffineTransform.hh"
 #include "G4PhysicalVolumeStore.hh"
+#include "G4AutoLock.hh"
+#include "G4Threading.hh"
 #include <vector>
 #ifdef Integer
 #undef Integer
@@ -37,9 +39,15 @@
 #include <TH3.h>
 #include <TFile.h>
 
+namespace {
+    G4Mutex gRootMutex = G4MUTEX_INITIALIZER;
+}
+
 // Vectors to safe the directions of 2 gammas
-std::map<G4int, G4ThreeVector> gamma1Directionsp;
-std::map<G4int, G4ThreeVector> gamma2Directionsp;
+static thread_local std::map<G4int, G4ThreeVector> gamma1Directionsp;
+static thread_local std::map<G4int, G4ThreeVector> gamma2Directionsp;
+static thread_local std::map<G4int, G4int> gamma1PrimaryID;
+
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
     : m_particleGun(std::make_shared<G4ParticleGun>(1)),
@@ -67,9 +75,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 {
     // Default particle gun, just a 0MeV gamma
     auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
-    m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 0.));
+    m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
     m_particleGun->SetParticleDefinition(particleDefinition);
-    m_particleGun->SetParticleEnergy(0. * MeV);
+    m_particleGun->SetParticleEnergy(0.5 * MeV);
 
     // Define macro-commands, setting default values etc
     m_cmdSetVolumeHeight->SetParameterName("sourceHeight", false);
@@ -106,25 +114,27 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
     G4cout << "Command /generator/setDecay0File registered" << G4endl;
 
 
+    {
+        G4AutoLock lock(&gRootMutex);
+        // Verteilung Bestrahlung in Cerium Probe, laden Histogram
+        TFile* file = TFile::Open("/SHARE/raw/users/pichotta/TU1/Simulation/projects/Cerium/Verteilung/activation_map_140_JENDL.root");
+        if (!file || file->IsZombie()) {
+            G4cerr << "Fehler: Konnte .root file nicht �ffnen!" << G4endl;
+            exit(100);
+        }
 
-    // Verteilung Bestrahlung in Cerium Probe, laden Histogram
-    TFile* file = TFile::Open("/SHARE/raw/users/pichotta/TU1/Simulation/projects/Cerium/Verteilung/activation_map_140_JENDL.root");
-    if (!file || file->IsZombie()) {
-        G4cerr << "Fehler: Konnte .root file nicht �ffnen!" << G4endl;
-        exit(100);
+        h3 = (TH3F*)file->Get("h3D;1");
+        if (!h3) {
+            G4cerr << "Fehler: Histogramm 'hXZ; 1' nicht gefunden!" << G4endl;
+            exit(101);
+        }
+
+        h3->SetDirectory(0); // vom File trennen
+        file->Close();
+        delete file;
+        
+        gRandom->SetSeed(0);
     }
-
-    h3 = (TH3F*)file->Get("h3D;1");
-    if (!h3) {
-        G4cerr << "Fehler: Histogramm 'hXZ; 1' nicht gefunden!" << G4endl;
-        exit(101);
-    }
-
-    h3->SetDirectory(0); // vom File trennen
-    file->Close();
-    delete file;
-    
-    gRandom->SetSeed(0);
 }
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
@@ -254,57 +264,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
         pos = m_particleGun->GetParticlePosition();
         break;
 
-        /*case inCylinder:
-        {
-            // Retrieve the logical volume
-            G4LogicalVolume* logicalVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("CylinderL");
-
-            if (logicalVolume == nullptr) {
-                logicalVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("ExtendedSample");
-
-                if (logicalVolume == nullptr) {
-                    G4cerr << "Neither 'CylinderL' nor 'ExtendedSample' found! Please define one of these volumes in TU1Detektor.cc." << G4endl;
-                    exit(99);
-                }
-            }
-            // Get the solid from the logical volume (with name 'sample')
-            G4VSolid* solid = logicalVolume->GetSolid();
-            G4VPhysicalVolume* physicalVolume = nullptr;
-            for (auto iter = G4PhysicalVolumeStore::GetInstance()->begin(); iter != G4PhysicalVolumeStore::GetInstance()->end(); ++iter) {
-                if ((*iter)->GetLogicalVolume() == logicalVolume) {
-                    physicalVolume = *iter;
-                    break;
-                }
-            }
-            if (!physicalVolume)
-            {
-                G4cerr << "Physical volume of Cylinder not found!" << G4endl;
-                exit(99);
-            }
-
-            G4double sourceRadius = m_sourceDiameter / 2.;
-            G4double randomRadius = sourceRadius * std::sqrt(G4UniformRand());
-            G4double randomTheta = G4UniformRand() * CLHEP::twopi;
-            pos = G4ThreeVector(
-                randomRadius * std::cos(randomTheta),
-                randomRadius * std::sin(randomTheta),
-                m_offsetOfSource + G4UniformRand() * m_sourceHeight);
-
-            G4AffineTransform transform = G4AffineTransform(physicalVolume->GetRotation(), physicalVolume->GetTranslation());
-            G4ThreeVector localPos = transform.Inverse().TransformPoint(pos);
-
-            if (solid->Inside(localPos) != kInside)
-            {
-                G4cerr << "Generated position is outside of the physical volume!" << G4endl;
-                exit(101);
-            }
-        }
-        break;*/
-
     case inCylinder:
     {
-        // Retrieve the logical volume
-        G4LogicalVolume* logicalVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("CylinderL");
+        // Retrieve the logical volume 
+        G4LogicalVolume* logicalVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("CylinderL"); 
 
         if (logicalVolume == nullptr) {
             logicalVolume = G4LogicalVolumeStore::GetInstance()->GetVolume("ExtendedSample");
@@ -314,120 +277,39 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
                 exit(99);
             }
         }
-
+        // Get the solid from the logical volume (with name 'sample')
         G4VSolid* solid = logicalVolume->GetSolid();
         G4VPhysicalVolume* physicalVolume = nullptr;
-
         for (auto iter = G4PhysicalVolumeStore::GetInstance()->begin(); iter != G4PhysicalVolumeStore::GetInstance()->end(); ++iter) {
             if ((*iter)->GetLogicalVolume() == logicalVolume) {
                 physicalVolume = *iter;
                 break;
             }
         }
-
         if (!physicalVolume)
         {
             G4cerr << "Physical volume of Cylinder not found!" << G4endl;
             exit(99);
         }
 
-        int maxTries = 10000;
-        for (int i = 0; i < maxTries; ++i) {
-            double x, y, z;
-            h3->GetRandom3(x, y, z);
+        G4double sourceRadius = m_sourceDiameter / 2.;
+        G4double randomRadius = sourceRadius * std::sqrt(G4UniformRand());
+        G4double randomTheta = G4UniformRand() * CLHEP::twopi;
+        pos = G4ThreeVector(
+            randomRadius * std::cos(randomTheta),
+            randomRadius * std::sin(randomTheta),
+            m_offsetOfSource + G4UniformRand() * m_sourceHeight);
 
-            // Bedingungen pr�fen
-            G4double radius = std::sqrt(x * x + y * y);
-            if (radius > m_sourceDiameter / 2.) continue;
+        G4AffineTransform transform = G4AffineTransform(physicalVolume->GetRotation(), physicalVolume->GetTranslation());
+        G4ThreeVector localPos = transform.Inverse().TransformPoint(pos);
 
-            //if (x < -m_sourceDiameter/2. || x > m_sourceDiameter/2.) continue;
-            //if (y < -m_sourceDiameter/2. || y > m_sourceDiameter/2.) continue;
-            if (z > m_sourceHeight / 2. - 0.0001 || z < -m_sourceHeight / 2. + 0.0001) continue;
-           
-		
-
-            /*     if(z < (m_sourceHeight/2. + 0.1) && z > (m_sourceHeight/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceHeight/2. " <<m_sourceHeight/2. << G4endl;
-                     G4cerr << "z " <<z << G4endl;
-                     z = m_sourceHeight/2.-0.0001;
-                 }
-                 if(z > -(m_sourceHeight/2. + 0.1) && z < -(m_sourceHeight/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceHeight/2. " <<m_sourceHeight/2. << G4endl;
-                     G4cerr << "-z " <<z << G4endl;
-                     z = - m_sourceHeight/2.+0.0001;
-                 }
-
-                 if(x < (m_sourceDiameter/2. + 0.1) && x > (m_sourceDiameter/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceDiameter/2. " <<m_sourceDiameter/2. << G4endl;
-                     G4cerr << "x " <<x << G4endl;
-                     x = m_sourceDiameter/2.-0.0001;
-                     G4cerr << "x neu " <<x << G4endl;
-                 }
-                 if(x > -(m_sourceDiameter/2. + 0.1) && x < -(m_sourceDiameter/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceDiameter/2. " <<m_sourceDiameter/2. << G4endl;
-                     G4cerr << "x " <<x << G4endl;
-                     x = - m_sourceDiameter/2.+-0.0001;
-                     G4cerr << "-x neu" <<x << G4endl;
-                 }
-                 if(y < (m_sourceDiameter/2. + 0.1) && y > (m_sourceDiameter/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceDiameter/2. " <<m_sourceDiameter/2. << G4endl;
-                     G4cerr << "y " <<y << G4endl;
-                     y = m_sourceDiameter/2.-0.0001;
-                     G4cerr << "y neu " <<x << G4endl;
-                 }
-                 if(y > -(m_sourceDiameter/2. + 0.1) && y < -(m_sourceDiameter/2.))
-                 {
-                     G4cerr << "__________________________________" << G4endl;
-                     G4cerr << "m_sourceDiameter/2. " <<m_sourceDiameter/2. << G4endl;
-                     G4cerr << "y " <<y << G4endl;
-                     y = - m_sourceDiameter/2.+-0.0001;
-                     G4cerr << "-y neu" <<y << G4endl;
-                 }*/
-
-            pos = G4ThreeVector(
-                x,
-                y,
-                z + m_offsetOfSource + m_sourceHeight / 2.);
-
-
-            G4AffineTransform transform = G4AffineTransform(physicalVolume->GetTranslation());
-            G4ThreeVector localPos = transform.Inverse().TransformPoint(pos);
-
-            if (solid->Inside(localPos) != kInside)
-            {
-                G4cerr << "__________________________________" << G4endl;
-                G4cerr << "Generated Position is outside of the physical volume!" << G4endl;
-                G4cerr << "r " << radius << G4endl;
-                G4cerr << "x " << x << G4endl;
-                G4cerr << "y " << y << G4endl;
-                G4cerr << "z " << z << G4endl;
-                G4cerr << "pos " << pos << G4endl;
-                G4cerr << "localPos " << localPos << G4endl;
-
-                G4cerr << "Generated position is outside of the physical volume!" << G4endl;
-                exit(101);
-            }
-            if (i == maxTries) {
-                G4cerr << "Kein g�ltiger Punkt in " << maxTries << " Versuchen gefunden!" << G4endl;
-                exit(102);
-            }
+        if (solid->Inside(localPos) != kInside)
+        {
+            G4cerr << "Generated position is outside of the physical volume!" << G4endl;
+            exit(101);
         }
-        //m_particleGun->SetParticlePosition(pos);
-        //G4cout << "___________________________________ "<<G4endl;
-       // G4cout << "FINAL START POSITION = " << m_particleGun->GetParticlePosition() << G4endl;
     }
     break;
-
 
     case inSphere:
     {
@@ -471,7 +353,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
             r * sinPhi * sinTheta,
             r * cosPhi + m_offsetOfSource + radius);
 
-        G4AffineTransform transform = G4AffineTransform(physicalVolume->GetTranslation());
+        G4AffineTransform transform = G4AffineTransform(physicalVolume->GetRotation(), physicalVolume->GetTranslation());
         G4ThreeVector localPos = transform.Inverse().TransformPoint(pos);
 
         if (solid->Inside(localPos) != kInside)
@@ -529,7 +411,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
         }
     }
     break;
-
     case inLogicalVolume:
     {
         // Retrieve the logical volume with name 'sample'
@@ -608,7 +489,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
         G4cerr << "Unhandled case for m_posMode in PrimaryGeneratorAction(2)" << G4endl;
         exit(99);
     }
-
     m_particleGun->SetParticlePosition(pos);
 
 
@@ -626,109 +506,78 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
         m_particleGun->GeneratePrimaryVertex(anEvent);
         break;
     case decay0:
-    { // Brakets necessary as we define new 'local' variables inside!
+    {
         G4int currentEventId;
         G4String currentIsotopeName;
-        std::vector<std::tuple<int, double, G4ThreeVector>> particlesToGenerate;
-        //
-        if (!ParseDecayZeroFileSingleBlock(currentEventId, currentIsotopeName, particlesToGenerate))
-        {
-            G4cerr << "End of decay0 file reached but more events requetsed." << G4endl;
-            exit(99);
+        std::vector<std::tuple<int,double,G4ThreeVector>> particlesToGenerate;
+        if (!ParseDecayZeroFileSingleBlock(currentEventId, currentIsotopeName, particlesToGenerate)) {
+            G4Exception("PrimaryGeneratorAction::GeneratePrimaries",
+                        "PG001", FatalException,
+                        "End of decay0 file reached while more events requested.");
         }
-        //
-        for (std::vector<std::tuple<int, double, G4ThreeVector>>::iterator it = particlesToGenerate.begin(); it != particlesToGenerate.end(); ++it)
+
+        for (auto& currentParticle : particlesToGenerate)
         {
-            std::tuple<int, double, G4ThreeVector> currentParticle = *it;
-
             int customPID = std::get<0>(currentParticle);
-            if (customPID == 3) { m_particleGun->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle(11)); }
-            else if (customPID == 2) { m_particleGun->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle(-11)); }
-            else if (customPID == 1) { m_particleGun->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle(22)); }
-            else { G4cerr << "ERROR: Unknown particle ID in decay0 file. Only supported 3 (e-), 2 (e+) or 1 (gamma)!" << G4endl; exit(42); }
+            auto momDir    = std::get<2>(currentParticle);
+            if (momDir.mag2() == 0.) {
+                // Avoid zero vector (give arbitrary direction)
+                momDir = G4ThreeVector(0,0,1);
+            }
 
-            G4ThreeVector currMomVector = std::get<2>(currentParticle);
-            m_particleGun->SetParticleMomentumDirection(currMomVector);
-            G4double currMomMagnitude = currMomVector.mag();
-            m_particleGun->SetParticleMomentum(currMomMagnitude * CLHEP::MeV);
+            G4ParticleDefinition* pd = nullptr;
+            if      (customPID == 3) pd = G4ParticleTable::GetParticleTable()->FindParticle(11);   // e-
+            else if (customPID == 2) pd = G4ParticleTable::GetParticleTable()->FindParticle(-11);  // e+
+            else if (customPID == 1) pd = G4ParticleTable::GetParticleTable()->FindParticle(22);   // gamma
+            else {
+                G4Exception("PrimaryGeneratorAction::GeneratePrimaries",
+                            "PG002", FatalException,
+                            "Unknown particle ID in decay0 file (allowed 1,2,3).");
+            }
+            m_particleGun->SetParticleDefinition(pd);
 
+            const G4double pMag = momDir.mag();      // momentum magnitude (assumed MeV/c units in file?)
+            m_particleGun->SetParticleMomentum(pMag * MeV); // If file already in MeV/c this is OK; otherwise adjust
+            m_particleGun->SetParticleMomentumDirection(momDir.unit());
             m_particleGun->SetParticleTime(std::get<1>(currentParticle) * CLHEP::second);
 
             m_particleGun->GeneratePrimaryVertex(anEvent);
 
-            if (customPID == 1)
-            {
-                G4ThreeVector position = m_particleGun->GetParticlePosition();
-                G4double energy = m_particleGun->GetParticleEnergy();
-                G4ThreeVector direction = m_particleGun->GetParticleMomentumDirection();
-
-
+            if (customPID == 1) {
                 auto analysisManager = G4AnalysisManager::Instance();
-                //analysisManager->FillH1(0, energy); // all energy depositions
+                if (analysisManager && analysisManager->GetNtupleActivation(4)) { // guard
+                    const auto& position  = m_particleGun->GetParticlePosition();
+                    const auto& direction = m_particleGun->GetParticleMomentumDirection();
+                    const G4double energy = m_particleGun->GetParticleEnergy();
 
-                analysisManager->FillNtupleDColumn(4, 0, energy);
-                analysisManager->FillNtupleDColumn(4, 1, direction.x());
-                analysisManager->FillNtupleDColumn(4, 2, direction.y());
-                analysisManager->FillNtupleDColumn(4, 3, direction.z());
-                analysisManager->FillNtupleDColumn(4, 4, position.x());
-                analysisManager->FillNtupleDColumn(4, 5, position.y());
-                analysisManager->FillNtupleDColumn(4, 6, position.z());
-                analysisManager->AddNtupleRow(4);
-
-
-                // G4cout << "currentEventId  " << currentEventId << G4endl;
-                // 
-                 //in case of 2 gammas from one decay, the angle between gammas is calculated and printed
-                if (false)
-                {
-                    // calculate and save angle only if tuple was not filled already
-                    if (gamma1Directionsp.find(currentEventId) == gamma1Directionsp.end())
-                    {
-                        gamma1Directionsp[currentEventId] = direction;
-                        /* G4cout << "____________________ " << G4endl;
-                         G4cout << "Event " << currentEventId << G4endl;
-                         G4cout << "energy 1 " << energy << G4endl;*/
-
-                    }
-                    else if (gamma2Directionsp.find(currentEventId) == gamma2Directionsp.end())
-                    {
-                        gamma2Directionsp[currentEventId] = direction;
-
-                        const G4ThreeVector& dir1 = gamma1Directionsp[currentEventId];
-                        const G4ThreeVector& dir2 = gamma2Directionsp[currentEventId];
-
-                        // Normiere zur Sicherheit (falls nicht schon normiert)
-                        G4ThreeVector v1 = dir1.unit();
-                        G4ThreeVector v2 = dir2.unit();
-
-                        // Berechne den Winkel zwischen den beiden Vektoren (immer 0��180�)
-                        G4double angleRad = std::acos(v1.dot(v2));
-                        G4double angleDeg = angleRad * (180.0 / CLHEP::pi);
-
-                        /*G4cout << "Angle = " << angleDeg << "�" << G4endl;
-                        G4cout << "energy 2 " << energy << G4endl;*/
-
-
-                        auto analysisManager = G4AnalysisManager::Instance();
-                        analysisManager->FillNtupleDColumn(3, 0, angleDeg);
-                        analysisManager->AddNtupleRow(3);
-                    }
+                    analysisManager->FillNtupleDColumn(4,0, energy);
+                    analysisManager->FillNtupleDColumn(4,1, direction.x());
+                    analysisManager->FillNtupleDColumn(4,2, direction.y());
+                    analysisManager->FillNtupleDColumn(4,3, direction.z());
+                    analysisManager->FillNtupleDColumn(4,4, position.x());
+                    analysisManager->FillNtupleDColumn(4,5, position.y());
+                    analysisManager->FillNtupleDColumn(4,6, position.z());
+                    analysisManager->AddNtupleRow(4);
                 }
             }
         }
     }
     break;
     default:
-        G4cerr << "Unhandled case for m_directionMode in PrimaryGeneratorAction (1)" << G4endl;
-        exit(99);
+        G4Exception("PrimaryGeneratorAction::GeneratePrimaries",
+                    "PG003", FatalException,
+                    "Unhandled direction mode.");
     }
 
     // Safe starting position in root file
     auto analysisManager = G4AnalysisManager::Instance();
-    analysisManager->FillNtupleDColumn(0, 0, pos.x() / CLHEP::cm); // Ntuple 0, Spalte 0 = x-pos
-    analysisManager->FillNtupleDColumn(0, 1, pos.y() / CLHEP::cm); // Ntuple 0, Spalte 1 = y-pos
-    analysisManager->FillNtupleDColumn(0, 2, pos.z() / CLHEP::cm); // Ntuple 0, Spalte 2 = z-pos
-    analysisManager->AddNtupleRow(0);            // Ntuple 0 abschliessen
+        if (analysisManager->GetNofNtuples() > 0 && analysisManager->GetNtupleActivation(0)) {
+            analysisManager->FillNtupleDColumn(0,0, pos.x()/CLHEP::cm);
+            analysisManager->FillNtupleDColumn(0,1, pos.y()/CLHEP::cm);
+            analysisManager->FillNtupleDColumn(0,2, pos.z()/CLHEP::cm);
+            analysisManager->AddNtupleRow(0);
+        }
+    
 }
 
 void PrimaryGeneratorAction::SetNewValue(G4UIcommand* command, G4String newValue)

@@ -83,8 +83,11 @@ void EventAction::EndOfEventAction(const G4Event* event)
 
     // fill ntuple
     //
-    analysisManager->FillNtupleDColumn(2, 0, Edep / CLHEP::MeV);
-    analysisManager->FillNtupleDColumn(2, 1, Evis / CLHEP::MeV);
-    analysisManager->AddNtupleRow(2);
+    if (analysisManager->GetNofNtuples() > 3 ) {
+        analysisManager->FillNtupleDColumn(2, 0, Edep / CLHEP::MeV);
+        analysisManager->FillNtupleDColumn(2, 1, Evis / CLHEP::MeV);
+        analysisManager->AddNtupleRow(2);
+    }
+    
 }
 

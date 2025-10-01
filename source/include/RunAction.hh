@@ -27,16 +27,17 @@ class RunAction : public G4UserRunAction,
     public G4UImessenger
 {
 public:
-    RunAction();
-    ~RunAction() override {}
+    explicit RunAction(bool isMaster);
+    ~RunAction() override = default;
 
     void BeginOfRunAction(const G4Run*) override;
-    void   EndOfRunAction(const G4Run*) override;
+    void EndOfRunAction(const G4Run*) override;
 
 public:
     void SetNewValue (G4UIcommand* command, G4String newValue) override;
 
 private:
+    bool fIsMaster;
     G4String m_fileName = "TU1.root";
     shared_ptr<G4UIcmdWithAString> m_cmdFileName;
 };

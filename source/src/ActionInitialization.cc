@@ -8,16 +8,17 @@
 #include "EventAction.hh"
 #include "StackingAction.hh"
 #include "TrackingAction.hh"
+#include "DetectorResponse.hh"
 
 void ActionInitialization::BuildForMaster() const
 {
-    SetUserAction(new RunAction);
+    SetUserAction(new RunAction(true));
 }
 
 void ActionInitialization::Build() const
 {
     SetUserAction(new PrimaryGeneratorAction);
-    SetUserAction(new RunAction);
+    SetUserAction(new RunAction(false));
     SetUserAction(new EventAction);
     SetUserAction(new StackingAction);
     SetUserAction(new TrackingAction);
