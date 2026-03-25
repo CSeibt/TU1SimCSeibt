@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     // Get the pointer to the User Interface manager
     auto UImanager = G4UImanager::GetUIpointer();
     // Apply some settings
-    UImanager->ApplyCommand("/control/macroPath ../mac/");
+    UImanager->ApplyCommand("/control/macroPath ../Simulation/mac/");
     UImanager->ApplyCommand("/control/execute preInit.mac");
 
     // Process macro or start UI session

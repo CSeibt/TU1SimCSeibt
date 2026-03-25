@@ -109,6 +109,9 @@ void RunAction::BeginOfRunAction(const G4Run* /*run*/)
         std::mt19937 rng(static_cast<unsigned int>(seeds[0]));
         std::uniform_int_distribution<long> uni(1, 1000000000);
         seeds[1] = seeds[0] - uni(rng);
+#ifdef G4MULTITHREADED
+        seeds[1] += G4Threading::G4GetThreadId();
+#endif
         /*
         std::random_device rd;     // only used once to initialise (seed) engine
         std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)

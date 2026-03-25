@@ -37,6 +37,8 @@
 #include <TH3.h>
 #include <TFile.h>
 
+namespace { G4Mutex rootMutex = G4MUTEX_INITIALIZER; }
+
 // Vectors to safe the directions of 2 gammas
 std::map<G4int, G4ThreeVector> gamma1Directionsp;
 std::map<G4int, G4ThreeVector> gamma2Directionsp;
@@ -106,25 +108,27 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
     G4cout << "Command /generator/setDecay0File registered" << G4endl;
 
 
+    {
+        G4AutoLock lock(&rootMutex);
+        // Verteilung Bestrahlung in Cerium Probe, laden Histogram
+        TFile* file = TFile::Open("/SHARE/raw/users/pichotta/TU1/Simulation/projects/Cerium/Verteilung/activation_map_140_JENDL.root");
+        if (!file || file->IsZombie()) {
+            G4cerr << "Fehler: Konnte .root file nicht �ffnen!" << G4endl;
+            exit(100);
+        }
 
-    // Verteilung Bestrahlung in Cerium Probe, laden Histogram
-    TFile* file = TFile::Open("/SHARE/raw/users/pichotta/TU1/Simulation/projects/Cerium/Verteilung/activation_map_140_JENDL.root");
-    if (!file || file->IsZombie()) {
-        G4cerr << "Fehler: Konnte .root file nicht �ffnen!" << G4endl;
-        exit(100);
+        h3 = (TH3F*)file->Get("h3D;1");
+        if (!h3) {
+            G4cerr << "Fehler: Histogramm 'hXZ; 1' nicht gefunden!" << G4endl;
+            exit(101);
+        }
+
+        h3->SetDirectory(0); // vom File trennen
+        file->Close();
+        delete file;
+        
+        gRandom->SetSeed(0);
     }
-
-    h3 = (TH3F*)file->Get("h3D;1");
-    if (!h3) {
-        G4cerr << "Fehler: Histogramm 'hXZ; 1' nicht gefunden!" << G4endl;
-        exit(101);
-    }
-
-    h3->SetDirectory(0); // vom File trennen
-    file->Close();
-    delete file;
-    
-    gRandom->SetSeed(0);
 }
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
