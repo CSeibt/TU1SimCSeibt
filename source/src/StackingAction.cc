@@ -14,7 +14,7 @@
 
 G4ClassificationOfNewTrack StackingAction::ClassifyNewTrack(const G4Track* track)
 {
-    if (track->GetTotalEnergy() < 5*CLHEP::keV) return fKill;
+    //if (track->GetTotalEnergy() < 5*CLHEP::keV) return fKill;
     if (!m_pRadioactiveDecay)
     {
         // search for radioactive decay process

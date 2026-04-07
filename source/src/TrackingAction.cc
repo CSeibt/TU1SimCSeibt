@@ -46,7 +46,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 		//G4cout << "particle name  " << track->GetDefinition()->GetParticleName() << G4endl;
 		//G4cout << "gamma energy  " << track->GetKineticEnergy() << G4endl;
 
-
+		G4cout << " Gamma found from process: " << track->GetCreatorProcess()->GetProcessName() << G4endl;
 		if (track->GetCreatorProcess()->GetProcessName() == "RadioactiveDecay")
 		{
 			auto analysisManager = G4AnalysisManager::Instance();

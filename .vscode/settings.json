@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "peakanalyse_simulation_40K.C": "cpp"
+        "peakanalyse_simulation_40K.C": "cpp",
+        "peakanalyse_simulation_208Tl.C": "cpp"
     }
 }

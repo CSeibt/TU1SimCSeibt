@@ -14,7 +14,7 @@
 #/generator/setCustomDirection 0 0 -1
 # -----------
 #/generator/setDecay0File ../decay0/genCo60.txt
-/gun/position 6.6 12.3 0.317 mm
+/gun/position 0 0 -30 mm
 
 /gun/particle gamma
 /gun/energy 50 keV

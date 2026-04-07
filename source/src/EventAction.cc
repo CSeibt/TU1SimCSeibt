@@ -9,6 +9,9 @@
 
 G4THitsMap<G4double>* EventAction::GetHitsCollection(G4int hcID, const G4Event* event) const
 {
+    
+    G4cout << "Trying to get hits collection with ID " << hcID << "..." << G4endl;
+    G4cout << " Event " << event->GetEventID() << " has " << event->GetHCofThisEvent()->GetNumberOfCollections() << " hits collections." << G4endl;
     auto hitsCollection
         = static_cast<G4THitsMap<G4double>*>
         (event->GetHCofThisEvent()->GetHC(hcID));
@@ -42,12 +45,17 @@ G4double EventAction::GetSum(G4THitsMap<G4double>* hitsMap) const
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
-    // Get hist collections IDs
-    if (m_HPGeHCID == -1)
-    {
-        m_HPGeHCID = G4SDManager::GetSDMpointer()->GetCollectionID("HPGe/Edep");
-    }
 
+    if (event->GetEventID() % 1000 == 0)
+    {
+        G4cout << ">>> Event: " << event->GetEventID() << G4endl;
+        G4cout << " Reaching end of event action..." << G4endl;
+    }
+    // Get hist collections IDs
+    //if (m_HPGeHCID == -1)
+    //{
+    m_HPGeHCID = G4SDManager::GetSDMpointer()->GetCollectionID("HPGe/Edep");
+    //}
 
     //HitsMap Shenanigans and mischief
     /*
@@ -60,9 +68,15 @@ void EventAction::EndOfEventAction(const G4Event* event)
     }
     */
 
+    G4THitsMap<G4double>* hpgeHitsMap = GetHitsCollection(m_HPGeHCID, event);
+    G4cout << "Got hits collection with ID " << m_HPGeHCID << " with " << hpgeHitsMap->entries() << " entries" << G4endl;
+
+    G4cout << "Check SDManager: " << G4endl;
+    G4SDManager* sdManager = G4SDManager::GetSDMpointer();
+    sdManager->ListTree();
 
     // Get sum values from hits collections
-    auto Edep = GetSum(GetHitsCollection(m_HPGeHCID, event));
+    auto Edep = GetSum(hpgeHitsMap);
     auto Evis = m_detectorResponse.EnergyResponse(Edep);
 
     // get analysis manager
